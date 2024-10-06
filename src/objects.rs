@@ -1,9 +1,28 @@
 use std::f32::consts::E;
 
 use nalgebra_glm::{dot, Vec3};
-use crate::ray_intersect;
-use crate::ray_intersect::Material;
-use crate::ray_intersect::Intersect;
+use crate::materials;
+use crate::materials::Material;
+use crate::materials::Intersect;
+
+pub enum Object {
+    Sphere(Sphere),
+    SquarePlane(SquarePlane),
+}
+
+impl RayIntersect for Object {
+    fn ray_intersect(
+        &self,
+        ray_origin: &Vec3,
+        ray_direction: &Vec3,
+    ) -> Intersect {
+        match self {
+            Object::Sphere(sphere) => sphere.ray_intersect(ray_origin, ray_direction),
+            Object::SquarePlane(plane) => plane.ray_intersect(ray_origin, ray_direction),
+        }
+    }
+}
+
 pub struct Sphere{
     pub center: Vec3,
     pub radius: f32,
@@ -22,7 +41,6 @@ impl Sphere{
         }
     }
 }
-
 impl RayIntersect for Sphere{
     fn ray_intersect(
         &self,
@@ -36,25 +54,83 @@ impl RayIntersect for Sphere{
 
         let discriminant = b*b -4.0*a*c;
         if discriminant>0.0{
-            return Intersect::new(oc.magnitude(), true,self.material)
-        } else{
-            return Intersect::new(oc.magnitude(),false, self.material)
+            let t = (-b -discriminant.sqrt())/(2.0*a);
+            if t>0.0 {
+                let point = ray_origin + (ray_direction * t);
+                let normal = (point- self.center).normalize();
+                return Intersect::new(point, normal,t, true,self.material, 0.0, 0.0)
+            }
+
         }
+        return Intersect::empty()
     }
 }
-// pub struct Object {
-//     // fields
-// }
 
-// impl Object{
-//     pub fn ray_intersect(
-//         &self,
-//         ray_origin: &Vec3,
-//         ray_direction: &Vec3,
-//     ) -> Intersect{
-//         true
-//     }
-// }
+pub struct SquarePlane {
+    pub center: Vec3,     // Center point of the square plane
+    pub normal: Vec3,     // The normal vector of the plane
+    pub size: f32,        // The half-size of the square (from center to the edge)
+    pub material: Material
+}
+impl SquarePlane {
+    pub fn new(p_center: (f32, f32, f32), p_normal: (f32, f32, f32), size: f32, p_material: &str) -> Self {
+        SquarePlane {
+            center: Vec3::new(p_center.0,p_center.1,p_center.2),
+            normal:  Vec3::new(p_normal.0,p_normal.1,p_normal.2).normalize(),  // Ensure the normal is always normalized
+            size,
+            material: Material::new(p_material),
+        }
+    }
+    pub fn get_uv(&self, point: &Vec3) -> (f32, f32) {
+        // Define local axes for the plane (tangent and bitangent)
+        let tangent = if self.normal.x.abs() > 0.9 {
+            Vec3::new(0.0, 1.0, 0.0)
+        } else {
+            Vec3::new(1.0, 0.0, 0.0)
+        };
+        let bitangent = self.normal.cross(&tangent).normalize();
+
+        // Compute the local point relative to the plane's center
+        let local_point = point - self.center;
+
+        // Project the local point onto the tangent and bitangent to get the UV coordinates
+        let u = local_point.dot(&tangent) / self.size + 0.5;
+        let v = local_point.dot(&bitangent) / self.size + 0.5;
+
+        (u, v)
+    }
+}
+impl RayIntersect for SquarePlane {
+    fn ray_intersect(
+        &self,
+        ray_origin: &Vec3,
+        ray_direction: &Vec3,
+    ) -> Intersect {
+        let denom = dot(&self.normal, ray_direction);
+        
+        // If denom is close to 0, the ray is parallel to the plane
+        if denom.abs() < 1e-6 {
+            return Intersect::empty();
+        }
+
+        let t = dot(&(self.center - ray_origin), &self.normal) / denom;
+        
+        if t > 0.0 {
+            let point:Vec3 = ray_origin + (ray_direction*t);
+            let (u,v) = self.get_uv(&point);
+            // Check if the point lies within the square boundaries
+            let local_point:Vec3 = point - self.center;
+            let half_size = self.size / 2.0;
+
+            if local_point.x.abs() <= half_size && local_point.y.abs() <= half_size && local_point.z.abs() <= half_size {
+                // Ray intersects within the square boundaries
+                return Intersect::new(point, self.normal, t, true, self.material, u, v);
+            }
+        }
+        
+        Intersect::empty()
+    }
+}
 
 pub trait RayIntersect {
     fn ray_intersect(

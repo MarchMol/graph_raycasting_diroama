@@ -1,16 +1,32 @@
+use std::char::MAX;
+
+use nalgebra_glm::normalize;
 use nalgebra_glm::Vec3;
+use crate::light;
 use crate::objects::Sphere;
 use crate::objects::RayIntersect;
+use crate::objects::Object;
 use crate::color::Color;
-use crate::ray_intersect::Intersect;
+use crate::materials::Intersect;
+use crate::Light;
+
+const MAX_DEPTH: u32 = 3;
+const SKYBOX_COLOR: u32 = 0x7ed0d9;
+const ORIGIN_BIAS: f32 = 1e-4;
+
 pub fn cast_ray(
     ray_origin: &Vec3,
     ray_direction: &Vec3,
-    objects: &[Sphere]
+    objects: &[Object],
+    light: &Light,
+    depth: u32,
 ) -> u32{
+    if depth>MAX_DEPTH{
+        return SKYBOX_COLOR
+    }
     let mut intersect = Intersect::empty();
     let mut zbuffer = f32::INFINITY;
-
+    
     for object in objects{
         let tem = object.ray_intersect(ray_origin, ray_direction);
         if tem.is_intersecting &&
@@ -20,7 +36,99 @@ pub fn cast_ray(
         }
     }
     if !intersect.is_intersecting{
-        return 0x000000;
+        return SKYBOX_COLOR
     }
-    Color::to_hex(&intersect.material.diffuse)
+
+    let light_dir = (light.position - intersect.point).normalize();
+    let view_direction = (ray_origin -intersect.point).normalize();
+    let reflect_dir = reflect(&light_dir, &intersect.normal).normalize();
+
+    let shadow_intensity = cast_shadow(&intersect, light, objects);
+    let light_intensity = light.intensity*(1.0 - shadow_intensity);
+
+    let diffuse_intensity = intersect.normal.dot(&light_dir).max(0.0).min(1.0);
+    let diffuse_color = intersect.material.get_diffuse(intersect.u, intersect.v);
+    let diffuse = diffuse_color*intersect.material.albedo[0] * diffuse_intensity * light_intensity;
+    
+    let specular_intensity = view_direction.dot(&reflect_dir).max(0.0).powf(intersect.material.specular);
+    let specular = light.color*intersect.material.albedo[1] *specular_intensity*light_intensity;
+
+    let mut reflect_color = 0x000000;
+    let reflectivity = intersect.material.albedo[2];
+    if reflectivity > 0.0{
+        let reflect_dir= reflect(&ray_direction, &intersect.normal).normalize();
+        let reflect_origin = offset_origin(&intersect, &reflect_dir);
+        reflect_color = cast_ray(&reflect_origin, &reflect_dir, objects, light, depth+1);
+    }
+
+    let mut refract_color = 0x000000;
+    
+    let transparency = intersect.material.albedo[3];
+    if transparency > 0.0 {
+        let refract_dir = refract(&ray_direction, &intersect.normal, intersect.material.refractive_index);
+        let refract_origin = offset_origin(&intersect, &refract_dir);
+        refract_color = cast_ray(&refract_origin, &refract_dir, objects, light, depth+1)
+    }
+
+
+    (Color::to_hex(&diffuse)+Color::to_hex(&specular)) * (1 - reflectivity as u32 - transparency as u32) + (reflect_color * reflectivity as u32) +(refract_color * transparency as u32)
+}
+
+fn reflect(incident: &Vec3, normal: &Vec3) -> Vec3{
+    incident -2.0*incident.dot(normal)*normal
+}
+
+fn offset_origin(intersect: &Intersect, direction: &Vec3) -> Vec3 {
+    let offset = intersect.normal * ORIGIN_BIAS;
+    if direction.dot(&intersect.normal) < 0.0 {
+        intersect.point - offset
+    } else {
+        intersect.point + offset
+    }
+}
+
+fn refract(incident: &Vec3, normal: &Vec3, eta_t: f32) -> Vec3 {
+    let cosi = -incident.dot(normal).max(-1.0).min(1.0);
+    
+    let (n_cosi, eta, n_normal);
+
+    if cosi < 0.0 {
+        // Ray is entering the object
+        n_cosi = -cosi;
+        eta = 1.0 / eta_t;
+        n_normal = -normal;
+    } else {
+        // Ray is leaving the object
+        n_cosi = cosi;
+        eta = eta_t;  // Assuming it's going back into air with index 1.0
+        n_normal = *normal;
+    }
+    
+    let k = 1.0 - eta * eta * (1.0 - n_cosi * n_cosi);
+    
+    if k < 0.0 {
+        // Total internal reflection
+        reflect(incident, &n_normal)
+    } else {
+        eta * incident + (eta * n_cosi - k.sqrt()) * n_normal
+    }
+}
+
+fn cast_shadow(
+    intersect: &Intersect,
+    light: &Light,
+    objects: &[Object],
+) -> f32 {
+    let light_dir = (light.position - intersect.point).normalize();
+    let shadow_ray_origin = intersect.point;
+    let mut shadow_intensity = 0.0;
+    let light_distance = (light.position - intersect.point).magnitude()*500.0;
+    for object in objects {
+        let shadow_intersect = object.ray_intersect(&shadow_ray_origin, &light_dir);
+        if shadow_intersect.is_intersecting {
+            shadow_intensity = (1.0/light_distance).max(1.0);
+            break;
+        }
+    }
+    shadow_intensity
 }
