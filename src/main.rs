@@ -37,12 +37,24 @@ fn main() {
         up: Vec3::new(0.0,-1.0,0.0),
         has_changed: true};
 
-    let mut light = Light::new(
-        Vec3::new(0.0, 5.0, 10.0),
-        Color::new(255, 255, 255),
-        1.0
-    );
-    let mut light_change = true;
+
+        let l1 = Light::new(
+            Vec3::new(3.0, 2.0, 2.25),
+            Color::from_hex(0xd44a00),
+            0.5
+        );
+        let l2 = Light::new(
+            Vec3::new(-10.0, 5.0, 0.0),
+            Color::new(255, 255, 255),
+            0.6
+        );
+        let l3 = Light::new(
+            Vec3::new(0.0, 8.0, -8.0),
+            Color::new(255, 255, 255),
+            0.6
+        );
+
+    let lights = vec![l1, l2, l3];
     while window.is_open(){
         // closing game
         if window.is_key_down(Key::Escape) {
@@ -69,33 +81,9 @@ fn main() {
 
           
           
-        if window.is_key_down(Key::Up) {
-            light.position.y = light.position.y +0.2;
-            light_change = true;
-         }
-         if window.is_key_down(Key::Down) {
-            light.position.y = light.position.y -0.2;
-            light_change = true;
-          }
-          if window.is_key_down(Key::Left) {
-            light.position.x = light.position.x -0.2;
-            light_change = true;
-          }
-          if window.is_key_down(Key::Right) {
-            light.position.x = light.position.x +0.2;
-            light_change = true;
-           }
-           if window.is_key_down(Key::O) {
-            light.position.z = light.position.z +0.2;
-            light_change = true;
-          }
-          if window.is_key_down(Key::L) {
-            light.position.z = light.position.z -0.2;
-            light_change = true;
-           }
-        if camera.check_if_change() || light_change{
-            render(&mut framebuffer, &objects, &camera, &light);
-            light_change = false;
+
+        if camera.check_if_change(){
+            render(&mut framebuffer, &objects, &camera, &lights);
         }
         window
             .update_with_buffer(
@@ -109,7 +97,7 @@ fn main() {
 }
 
 
-pub fn render(framebuffer: &mut framebuffer::Framebuffer, objects: &[objects::Object], camera: &Camera, light: &Light) {
+pub fn render(framebuffer: &mut framebuffer::Framebuffer, objects: &[objects::Object], camera: &Camera, lights: &[Light]) {
     let width = framebuffer.width as f32;
     let height = framebuffer.height as f32;
     let aspect_ratio = width / height;
@@ -134,7 +122,7 @@ pub fn render(framebuffer: &mut framebuffer::Framebuffer, objects: &[objects::Ob
             let pixel_color:u32 = ray_caster::cast_ray(
                 
                 &camera.eye, &ray_direction,
-                 objects,&light,
+                 objects,lights,
                 0);
 
             // Draw the pixel on screen with the returned color

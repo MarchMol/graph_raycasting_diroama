@@ -18,7 +18,7 @@ pub fn cast_ray(
     ray_origin: &Vec3,
     ray_direction: &Vec3,
     objects: &[Object],
-    light: &Light,
+    lights: &[Light],
     depth: u32,
 ) -> u32{
     if depth>MAX_DEPTH{
@@ -39,40 +39,49 @@ pub fn cast_ray(
         return SKYBOX_COLOR
     }
 
-    let light_dir = (light.position - intersect.point).normalize();
-    let view_direction = (ray_origin -intersect.point).normalize();
-    let reflect_dir = reflect(&light_dir, &intersect.normal).normalize();
-
-    let shadow_intensity = cast_shadow(&intersect, light, objects);
-    let light_intensity = light.intensity*(1.0 - shadow_intensity);
-
-    let diffuse_intensity = intersect.normal.dot(&light_dir).max(0.0).min(1.0);
-
-    let diffuse_color = intersect.material.get_diffuse(intersect.u, intersect.v);
-    let diffuse = diffuse_color*intersect.material.albedo[0] * diffuse_intensity * light_intensity;
+    let view_direction = (ray_origin - intersect.point).normalize();
+    let mut total_diffuse = Color::from_hex(0x000000);
+    let mut total_specular = Color::from_hex(0x000000);
     
-    let specular_intensity = view_direction.dot(&reflect_dir).max(0.0).powf(intersect.material.specular);
-    let specular = light.color*intersect.material.albedo[1] *specular_intensity*light_intensity;
+    for light in lights {
+        let light_dir = (light.position - intersect.point).normalize();
+        let reflect_dir = reflect(&light_dir, &intersect.normal).normalize();
+        
+        let shadow_intensity = cast_shadow(&intersect, light, objects);
+        let light_intensity = light.intensity * (1.0 - shadow_intensity);
+
+        // Diffuse
+        let diffuse_intensity = intersect.normal.dot(&light_dir).max(0.0).min(1.0);
+        let diffuse_color = intersect.material.get_diffuse(intersect.u, intersect.v);
+        total_diffuse = total_diffuse + diffuse_color * intersect.material.albedo[0] * diffuse_intensity * light_intensity;
+
+        // Specular
+        let specular_intensity = view_direction.dot(&reflect_dir).max(0.0).powf(intersect.material.specular);
+        total_specular = total_specular+ light.color * intersect.material.albedo[1] * specular_intensity * light_intensity;
+    }
 
     let mut reflect_color = 0x000000;
     let reflectivity = intersect.material.albedo[2];
     if reflectivity > 0.0{
         let reflect_dir= reflect(&ray_direction, &intersect.normal).normalize();
         let reflect_origin = offset_origin(&intersect, &reflect_dir);
-        reflect_color = cast_ray(&reflect_origin, &reflect_dir, objects, light, depth+1);
+        reflect_color = cast_ray(&reflect_origin, &reflect_dir, objects, lights, depth+1);
     }
 
     let mut refract_color = 0x000000;
     
     let transparency = intersect.material.albedo[3];
     if transparency > 0.0 {
-        let refract_dir = refract(&ray_direction, &intersect.normal, intersect.material.refractive_index);
+        let refract_dir = refract(&ray_direction, &intersect.normal, intersect.material.refractive_index).normalize();
         let refract_origin = offset_origin(&intersect, &refract_dir);
-        refract_color = cast_ray(&refract_origin, &refract_dir, objects, light, depth+1)
+        refract_color = cast_ray(&refract_origin, &refract_dir, objects, lights, depth+1)
     }
 
 
-    (Color::to_hex(&diffuse)+Color::to_hex(&specular)) * (1 - reflectivity as u32 - transparency as u32) + (reflect_color * reflectivity as u32) +(refract_color * transparency as u32)
+    let total_color = Color::to_hex(&(( total_diffuse* (1.0 - reflectivity - transparency)) 
+                 + (Color::from_hex(reflect_color) * reflectivity)
+                 + (Color::from_hex(refract_color) * transparency)));
+    total_color
 }
 
 fn reflect(incident: &Vec3, normal: &Vec3) -> Vec3{
