@@ -94,9 +94,21 @@ impl SquarePlane {
         let local_point = point - self.center;
 
         // Project the local point onto the tangent and bitangent to get the UV coordinates
-        let u = local_point.dot(&tangent) / self.size + 0.5;
-        let v = local_point.dot(&bitangent) / self.size + 0.5;
+        let mut u = local_point.dot(&tangent) / self.size + 0.5;
+        let mut v = local_point.dot(&bitangent) / self.size + 0.5;
 
+        if self.normal.z > 0.0 {
+            v = 1.0 - v;
+        }
+        if self.normal.x > 0.0 {
+            let tem = u;
+            u = v;
+            v = 1.0 -tem;
+        } else if self.normal.x != 0.0{
+            let tem = u;
+            u = v;
+            v = 1.0 - tem;
+        }
         (u, v)
     }
 }
@@ -115,7 +127,7 @@ impl RayIntersect for SquarePlane {
 
         let t = dot(&(self.center - ray_origin), &self.normal) / denom;
         
-        if t > 0.0 {
+        if t > 0.001 {
             let point:Vec3 = ray_origin + (ray_direction*t);
             let (u,v) = self.get_uv(&point);
             // Check if the point lies within the square boundaries

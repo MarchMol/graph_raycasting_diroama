@@ -13,32 +13,24 @@ pub struct Material {
     pub specular: f32,
     pub albedo: [f32;4],
     pub refractive_index: f32,
-    pub is_emissive: bool,
-    pub emissive_light: Option<Light>
+    pub has_texture: bool,
+    pub texture: usize
 }
 impl Material{
     pub fn new( material: &str)-> Self{
         let mut albedo = [0.9, 0.1, 0.0, 0.0];
         let mut hex_color:u32 = 0x000000;
         let mut specular:f32 = 10.0;
-        let mut is_emissive = false;
-        let mut emissive_light = None;
         let mut refractive_index = 0.1;
+        let mut has_texture = false;
+        let mut texture = 0;
 
-        if material=="normal"{
-            hex_color = 0xa6a6a6;
-            specular=5.0;
-            albedo = [0.9, 0.1, 0.4, 0.5]
-        } else if material=="emissive"{
-            hex_color = 0xa6a6a6;
-            specular=5.0;
-            albedo = [0.9, 0.1, 0.0, 0.5];
-            is_emissive= true;
-            emissive_light = Some(Light::new(
-                Vec3::new(0.0, 5.0, 10.0),
-                Color::from_hex(0xff9100),
-                1.0
-            ));
+        if material=="grass_top"{
+            has_texture = true;
+            texture = 0;
+        } else if material=="grass_side" {
+            has_texture = true;
+            texture = 1;
         }
         let diffuse = Color::from_hex(hex_color);
         Material{
@@ -46,15 +38,28 @@ impl Material{
             specular,
             albedo,
             refractive_index,
-            is_emissive,
-            emissive_light
+            has_texture,
+            texture
         }
     }
 
     pub fn get_diffuse (&self, u: f32, v: f32) -> Color{
-        let x =(u  * (GRASS_TOP.width as f32-1.0)) as usize;
-        let y =(v  * (GRASS_TOP.height as f32-1.0)) as usize;
-        GRASS_TOP.get_color(x, y)
+
+        if self.has_texture{
+            let mut texture = &GRASS_TOP;
+            if self.texture ==0{ // Grass top
+                texture = &GRASS_TOP
+            } else if self.texture == 1{    
+                texture = &GRASS_SIDE
+            } 
+
+            let x =(u  * (texture.width as f32-1.0)) as usize;
+            let y =(v  * (texture.height as f32-1.0)) as usize;
+            texture.get_color(x, y)
+
+        } else {
+            self.diffuse
+        }
     }
 }
 
@@ -92,8 +97,8 @@ impl Intersect {
               specular: 0.0,
               albedo: [0.0, 0.0, 0.0, 0.0],
               refractive_index: 0.0,
-              is_emissive: false,
-              emissive_light: None
+              has_texture: false,
+              texture: 0
             },
             u: 0.0,
             v: 0.0

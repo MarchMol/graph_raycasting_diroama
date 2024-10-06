@@ -47,6 +47,7 @@ pub fn cast_ray(
     let light_intensity = light.intensity*(1.0 - shadow_intensity);
 
     let diffuse_intensity = intersect.normal.dot(&light_dir).max(0.0).min(1.0);
+
     let diffuse_color = intersect.material.get_diffuse(intersect.u, intersect.v);
     let diffuse = diffuse_color*intersect.material.albedo[0] * diffuse_intensity * light_intensity;
     
