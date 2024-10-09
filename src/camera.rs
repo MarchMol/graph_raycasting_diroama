@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use nalgebra_glm::{atan2, Vec3};
+use nalgebra_glm::Vec3;
 
 pub struct Camera {
     pub eye: Vec3,
@@ -26,7 +26,7 @@ impl Camera {
         self.has_changed = true;
     }
     pub fn orbit(&mut self, delta_yaw: f32, delta_pitch: f32){
-        let radius_vec = (self.eye-self.center);
+        let radius_vec = self.eye-self.center;
         let radius = radius_vec.magnitude();
         let current_yaw = radius_vec.z.atan2(radius_vec.x);
         let new_yaw =(current_yaw+delta_yaw)%(2.0*PI);

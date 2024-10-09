@@ -4,13 +4,12 @@ use camera::Camera;
 use color::Color;
 use light::Light;
 use nalgebra_glm::{normalize, Vec3};
-use objects::{Sphere, SquarePlane};
 mod camera;
 mod materials;
 mod objects;
 mod ray_caster;
 mod light;
-use std::time::{Duration};
+use std::time::Duration;
 use minifb::{Key, Window, WindowOptions};
 mod scene;
 mod texture;
@@ -27,7 +26,7 @@ fn main() {
     let objects = scene::get_scene();
     
     let mut window = Window::new(
-        "Raytracing - Test",
+        "Raycasting - Minecraft Diorama",
         window_width,
         window_height,
         WindowOptions::default(),
@@ -56,7 +55,7 @@ fn main() {
             0.6
         );
         let l4 = Light::new(
-            Vec3::new(2.5, 5.0, 7.5),
+            Vec3::new(10.0, 5.0, 5.5),
             Color::from_hex(0xee00ff),
             0.4
         );

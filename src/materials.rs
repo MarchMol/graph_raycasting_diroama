@@ -32,7 +32,7 @@ pub struct Material {
 impl Material{
     pub fn new( material: &str)-> Self{
         let mut albedo = [0.8, 0.2, 0.0, 0.0];
-        let mut hex_color:u32 = 0x000000;
+        let hex_color:u32 = 0x000000;
         let specular:f32 = 1.0;
         let mut refractive_index = 1.0;
         let mut has_texture = false;
@@ -54,6 +54,9 @@ impl Material{
             has_texture = true;
             texture = 4;
         } else if material=="magma"{
+            albedo[0] = 0.8;
+            albedo[1] = 0.3;
+            albedo[2] = 0.1;
             has_texture = true;
             texture = 5;
         } else if material == "nether"{
@@ -202,8 +205,4 @@ impl Intersect {
             v: 0.0
         }
     }
-}
-
-pub trait RayIntersect {
-  fn ray_intersect(&self, ray_origin: &Vec3, ray_direction: &Vec3) -> Intersect;
 }
