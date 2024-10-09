@@ -25,7 +25,7 @@
 0,1,5,front,nether
 -1,1,5,front,stone
 -2,1,5,front,stone
--3,1,4,front,grass_side
+-3,1,4,front,stone
 
 -1,2,6,front,grass_side
 -2,2,6,front,grass_side
@@ -47,8 +47,15 @@
 1,5,6,front,obsidian
 2,5,6,front,obsidian
 
+1,4,6.5,front,portal
+2,4,6.5,front,portal
+1,3,6.5,front,portal
+2,3,6.5,front,portal
+1,2,6.5,front,portal
+2,2,6.5,front,portal
+
 -2.5,0,0.5,left,grass_side
--2.5,-1,0.5,left,dirt
+-2.5,-1,0.5,left,stone
 
 1.5,0,1.5,left,grass_side
 1.5,0,2.5,left,grass_side
@@ -56,6 +63,35 @@
 
 2.5,1,1.5,left,furnace_front
 2.5,1,2.5,left,craft_side
+
+
+-3.5,1,6.5,left,grass_side
+-3.5,1,5.5,left,grass_side
+-3.5,1,4.5,left,stone
+-3.5,0,3.5,left,grass_side
+-3.5,0,2.5,left,grass_side
+-3.5,0,1.5,left,grass_side
+
+-3.5,0,6.5,left,dirt
+-3.5,-1,6.5,left,stone
+-3.5,0,5.5,left,dirt
+-3.5,-1,5.5,left,stone
+-3.5,0,4.5,left,dirt
+-3.5,-1,4.5,left,dirt
+-3.5,-1,3.5,left,dirt
+-3.5,-1,2.5,left,stone
+-3.5,-1,1.5,left,dirt
+
+-2.5,2,6.5,left,grass_side
+
+-0.5,3,6.5,left,obsidian
+-0.5,4,6.5,left,obsidian
+-0.5,5,6.5,left,obsidian
+
+2.5,2,6.5,left,obsidian
+2.5,3,6.5,left,obsidian
+2.5,4,6.5,left,obsidian
+
 
 1,0.4,1.5,up,water
 0,0.4,1.5,up,water
@@ -104,7 +140,7 @@
 2,0.5,3.5,up,grass_top
 3,0.5,3.5,up,grass_top
 
--3,1.5,4.5,up,grass_top
+
 
 -2,0.5,4.5,up,coal
 -1,0.5,4.5,up,coal
@@ -120,7 +156,16 @@
 0,1.5,5.5,up,nether
 -1,1.5,5.5,up,stone
 -2,1.5,5.5,up,stone
+-3,1.5,4.5,up,stone
 -3,1.5,5.5,up,grass_top
+-3,1.5,6.5,up,grass_top
+
+-2,2.5,6.5,up,grass_top
+-1,2.5,6.5,up,grass_top
+0,5.5,6.5,up,obsidian
+1,5.5,6.5,up,obsidian
+2,5.5,6.5,up,obsidian
+3,5.5,6.5,up,obsidian
 
 1,1.5,6.5,up,obsidian
 2,1.5,6.5,up,obsidian
@@ -131,6 +176,10 @@
 3.5,0,1.5,right,dirt
 3.5,-1,1.5,right,stone
 3.5,0,2.5,right,dirt
+
+3.5,1,1.5,right,furnace_side
+3.5,1,2.5,right,craft_side
+
 3.5,-1,2.5,right,stone
 3.5,0,3.5,right,grass_side
 3.5,-1,3.5,right,stone
@@ -138,14 +187,25 @@
 3.5,-1,4.5,right,stone
 3.5,0,5.5,right,magma
 3.5,-1,5.5,right,stone
+3.5,0,6.5,right,dirt
+3.5,-1,6.5,right,stone
 
 -1.5,0,1.5,right,grass_side
 -2.5,0,2.5,right,grass_side
 -2.5,0,3.5,right,grass_side
 
--2.5,1,4.5,right,grass_side
+-2.5,1,4.5,right,stone
 0.5,1,5.5,right,nether
 
 0.5,2,6.5,right,obsidian
 0.5,3,6.5,right,obsidian
 0.5,4,6.5,right,obsidian
+
+3.5,1,6.5,right,obsidian
+3.5,2,6.5,right,obsidian
+3.5,3,6.5,right,obsidian
+3.5,4,6.5,right,obsidian
+3.5,5,6.5,right,obsidian
+
+1,4.5,6.5,bottom,obsidian
+2,4.5,6.5,bottom,obsidian

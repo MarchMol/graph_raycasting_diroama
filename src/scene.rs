@@ -18,6 +18,8 @@ pub fn get_scene() -> Vec<Object> {
             normal = (1.0,0.0,0.0);
         } else if plane.3 == "up"{
             normal = (0.0,1.0,0.0);
+        } else if plane.3 == "bottom"{
+            normal = (0.0,-1.0,0.0);
         }
         objects.push(
             Object::SquarePlane(SquarePlane::new(

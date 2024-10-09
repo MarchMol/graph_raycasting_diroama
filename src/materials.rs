@@ -18,6 +18,7 @@ static FURNACE_TOP: Lazy<Arc<Texture>> = Lazy::new(|| Arc::new(Texture::new("ass
 static CRAFT_TOP: Lazy<Arc<Texture>> = Lazy::new(|| Arc::new(Texture::new("assets/craft_top.bmp")));
 static CRAFT_SIDE: Lazy<Arc<Texture>> = Lazy::new(|| Arc::new(Texture::new("assets/craft_side.bmp")));
 static WATER: Lazy<Arc<Texture>> = Lazy::new(|| Arc::new(Texture::new("assets/water.bmp")));
+static PORTAL: Lazy<Arc<Texture>> = Lazy::new(|| Arc::new(Texture::new("assets/portal.bmp")));
 
 #[derive(Debug, Clone, Copy)]
 pub struct Material {
@@ -30,15 +31,14 @@ pub struct Material {
 }
 impl Material{
     pub fn new( material: &str)-> Self{
-        let mut albedo = [0.9, 0.1, 0.0, 0.0];
+        let mut albedo = [0.8, 0.2, 0.0, 0.0];
         let mut hex_color:u32 = 0x000000;
-        let mut specular:f32 = 10.0;
+        let specular:f32 = 1.0;
         let mut refractive_index = 1.0;
         let mut has_texture = false;
         let mut texture = 0;
 
         if material=="grass_top"{
-            specular = 0.0;
             has_texture = true;
             texture = 0;
         } else if material=="grass_side" {
@@ -60,30 +60,49 @@ impl Material{
             has_texture = true;
             texture = 6;
         } else if material == "obsidian"{
+            albedo[2] = 0.1;
             has_texture = true;
             texture = 7;
         } else if material == "furnace_front"{
+            albedo[0] = 0.9;
+            albedo[1] = 0.1;
             has_texture = true;
             texture = 8;
         } else if material == "furnace_side"{
+            albedo[0] = 0.9;
+            albedo[1] = 0.1;
             has_texture = true;
             texture = 9;
         } else if material == "furnace_top"{
+            albedo[0] = 0.9;
+            albedo[1] = 0.1;
             has_texture = true;
             texture = 10;
         } else if material == "craft_top"{
+            albedo[0] = 0.9;
+            albedo[1] = 0.1;
             has_texture = true;
             texture = 11;
         } else if material == "craft_side"{
+            albedo[0] = 0.9;
+            albedo[1] = 0.1;
             has_texture = true;
             texture = 12;
         }else if material == "water"{
-            albedo[0] = 0.1;
-            albedo[1] = 0.9;
-            albedo[2] = 0.2;
-            albedo[3] = 1.0;
+            albedo[0] = 0.8;
+            albedo[1] = 0.5;
+            albedo[2] = 0.1;
+            albedo[3] = 0.1;
+            refractive_index = 1.33;
             has_texture = true;
             texture = 13;
+        } else if material == "portal"{
+            albedo[0] = 0.8;
+            albedo[1] = 0.9;
+            albedo[2] = 0.1;
+            albedo[3] = 0.08;
+            has_texture = true;
+            texture = 14;
         }
         let diffuse = Color::from_hex(hex_color);
         Material{
@@ -128,6 +147,8 @@ impl Material{
                 texture = &CRAFT_SIDE
             } else if self.texture == 13{
                 texture = &WATER
+            }else if self.texture == 14{
+                texture = &PORTAL
             }
 
             let x =(u  * (texture.width as f32-1.0)) as usize;

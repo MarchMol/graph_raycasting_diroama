@@ -1,18 +1,35 @@
-use std::char::MAX;
-
-use nalgebra_glm::normalize;
 use nalgebra_glm::Vec3;
-use crate::light;
-use crate::objects::Sphere;
+use std::sync::Arc;
+use once_cell::sync::Lazy;
 use crate::objects::RayIntersect;
 use crate::objects::Object;
 use crate::color::Color;
 use crate::materials::Intersect;
 use crate::Light;
+use crate::texture::Texture;
 
+static SKYBOX_TEXTURE: Lazy<Arc<Texture>> = Lazy::new(|| Arc::new(Texture::new("assets/skybox.png")));
 const MAX_DEPTH: u32 = 3;
 const SKYBOX_COLOR: u32 = 0x7ed0d9;
 const ORIGIN_BIAS: f32 = 1e-4;
+
+
+pub fn sample(ray_direction: &Vec3) -> u32 {
+    let (u, v) = get_uv(ray_direction);
+    let pixel = SKYBOX_TEXTURE.get_color(
+        (u * (SKYBOX_TEXTURE.width as f32 -1.0)) as usize,
+        (v * (SKYBOX_TEXTURE.height as f32-1.0)) as usize
+    );
+    Color::to_hex(&pixel)
+}
+
+pub fn get_uv(ray_direction: &Vec3) -> (f32, f32) {
+    let phi = ray_direction.z.atan2(ray_direction.x); // Azimuth angle
+    let theta = ray_direction.y.asin();               // Elevation angle
+    let u = 0.5 + (phi / (2.0 * std::f32::consts::PI));
+    let v = 0.5 - (theta / std::f32::consts::PI);
+    (u, v)
+}
 
 pub fn cast_ray(
     ray_origin: &Vec3,
@@ -36,7 +53,7 @@ pub fn cast_ray(
         }
     }
     if !intersect.is_intersecting{
-        return SKYBOX_COLOR
+        return sample(ray_direction)
     }
 
     let view_direction = (ray_origin - intersect.point).normalize();
@@ -57,7 +74,7 @@ pub fn cast_ray(
 
         // Specular
         let specular_intensity = view_direction.dot(&reflect_dir).max(0.0).powf(intersect.material.specular);
-        total_specular = total_specular+ light.color * intersect.material.albedo[1] * specular_intensity * light_intensity;
+        total_specular = total_specular + (light.color* intersect.material.albedo[1] * specular_intensity * light_intensity);
     }
 
     let mut reflect_color = 0x000000;
@@ -78,7 +95,7 @@ pub fn cast_ray(
     }
 
 
-    let total_color = Color::to_hex(&(( total_diffuse* (1.0 - reflectivity - transparency)) 
+    let total_color = Color::to_hex(&(( (total_diffuse+total_specular)* (1.0 - reflectivity - transparency)) 
                  + (Color::from_hex(reflect_color) * reflectivity)
                  + (Color::from_hex(refract_color) * transparency)));
     total_color
