@@ -1059,6 +1059,7 @@ dependencies = [
  "minifb",
  "nalgebra-glm",
  "once_cell",
+ "rayon",
 ]
 
 [[package]]
